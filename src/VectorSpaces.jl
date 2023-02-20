@@ -14,7 +14,8 @@ struct VectorSpace{T<:Number,Q<:Union{QRPivoted{T},Nothing}}
     rank::Int
     first::Int
     qrf::Q
-    VectorSpace{T}(n::Int, rank::Int, first::Int, qrf::Q) where {T,Q} = new{T,Q}(n, rank, first, qrf)
+    VectorSpace{T}(n::Int, rank::Int, first::Int, qrf::Q) where {T,Q} =
+        new{T,Q}(n, rank, first, qrf)
 end
 
 function show(io::IO, vs::VectorSpace)
@@ -64,8 +65,7 @@ rank(vs::VectorSpace) = vs.rank
 dim(vs::VectorSpace) = vs.n
 eltype(::VectorSpace{T}) where T = T
 
-copy(vs::VectorSpace{T}) where {T} =
-    VectorSpace{T}(vs.n, vs.rank, vs.first, vs.qrf)
+copy(vs::VectorSpace{T}) where {T} = VectorSpace{T}(vs.n, vs.rank, vs.first, vs.qrf)
 
 """
     adjoint(vs::VectorSpace) -> VectorSpace
@@ -192,7 +192,7 @@ function image(A::AbstractArray{T}, k::Int) where {T<:Number}
     k == 1 ? VectorSpace(A) : image(A, VectorSpace(T, size(A, 2)), k)
 end
 
-function image(A::AbstractMatrix, vs::VectorSpace, k::Int=1)
+function image(A::AbstractMatrix, vs::VectorSpace, k::Int = 1)
     k ≥ 0 || error("exponent ≥ 0 required")
     n, m = size(A)
     na, ra = size(vs)
@@ -234,7 +234,7 @@ function preimage(A::AbstractArray{T}, k::Int) where {T<:Number}
     k == 1 ? kernel(A) : preimage(A, ZeroSpace(T, size(A, 1)), k)
 end
 
-function preimage(A::AbstractArray, vs::VectorSpace, k::Int=1)
+function preimage(A::AbstractArray, vs::VectorSpace, k::Int = 1)
     k ≥ 0 || error("exponent ≥ 0 required")
     n, m = size(A)
     na, ra = size(vs)
@@ -338,16 +338,18 @@ Determine if VectorSpaces are (numerically) equal.
 Equivalent to `va ⊆ vb and vb ⊆ va`.
 """
 function ==(va::VectorSpace, vb::VectorSpace)
-    va.rank == vb.rank &&
-        issubset(va, vb)
+    va.rank == vb.rank && issubset(va, vb)
 end
 
 #########################################################################################
 
-function _rank(QR::LinearAlgebra.QRPivoted{T,S}, tol::AbstractFloat) where {S<:AbstractMatrix{T}} where {T<:Number}
+function _rank(
+    QR::LinearAlgebra.QRPivoted{T,S},
+    tol::AbstractFloat,
+) where {S<:AbstractMatrix{T}} where {T<:Number}
     minimum(size(QR)) == 0 && (return 0)
     R = QR.R
-    sv = sort(abs.(diag(R)), rev=true)
+    sv = sort(abs.(diag(R)); rev = true)
     n = length(sv)
     while n > 0 && sv[n] <= tol
         n -= 1

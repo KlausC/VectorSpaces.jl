@@ -1,5 +1,7 @@
 # VectorSpaces
 
+[![Build Status][gha-img]][gha-url]     [![Coverage Status][codecov-img]][codecov-url]
+
 This package supports Standard vector spaces over `Number`.
 
 ## Basic Operations
@@ -90,3 +92,9 @@ If the rank is not 0 and less than dim, a qr-factorization is used to define an
 orthonormal (or unitary) basis.
 The orthogonal complement `V'` of a vector space `V` is represented by
 the same qr-factors and an additional indicator.
+
+[gha-img]: https://github.com/KlausC/VectorSpaces.jl/workflows/CI/badge.svg
+[gha-url]: https://github.com/KlausC/VectorSpaces.jl/actions?query=workflow%3ACI
+
+[codecov-img]: https://codecov.io/gh/KlausC/VectorSpaces.jl/branch/main/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/KlausC/VectorSpaces.jl
