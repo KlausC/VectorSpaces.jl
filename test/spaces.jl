@@ -31,4 +31,7 @@ vb = VectorSpace(B)
 
 @test kernel(A) == preimage(A)
 
+@test kernel(A') == image(A)'
+@test kernel(A)' == image(A')
+
 end # module

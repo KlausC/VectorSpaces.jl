@@ -8,12 +8,12 @@ using LinearAlgebra
 import Base: show, size, copy, adjoint, union, intersect, in, issubset, (==), (*), (\)
 import LinearAlgebra: rank
 
-struct VectorSpace{T<:Number,S<:AbstractMatrix}
+struct VectorSpace{T<:Number,Q<:Union{QRPivoted{T},Nothing}}
     n::Int
     rank::Int
     first::Int
-    qrf::Union{QRPivoted{T,S},Nothing}
-    VectorSpace{T,S}(n::Int, rank::Int, first::Int, qrf::Union{QRPivoted{T,S},Nothing}) where {T,S<:AbstractMatrix} = new(n, rank, first, qrf)
+    qrf::Q
+    VectorSpace{T}(n::Int, rank::Int, first::Int, qrf::Q) where {T,Q} = new{T,Q}(n, rank, first, qrf)
 end
 
 function show(io::IO, vs::VectorSpace)
@@ -38,7 +38,7 @@ function VectorSpace(A::AbstractMatrix{T}) where {T<:Number}
     if r <= 0 || r >= n
         qrf = nothing
     end
-    VectorSpace{T,typeof(A)}(n, r, 1, qrf)
+    VectorSpace{T}(n, r, 1, qrf)
 end
 
 VectorSpace(B::AbstractVector{T}) where {T<:Number} = VectorSpace(reshape(B, size(B, 1), 1))
@@ -47,7 +47,7 @@ VectorSpace(B::AbstractVector{T}) where {T<:Number} = VectorSpace(reshape(B, siz
 
 Create zero space in base space of dimension `n`. Default type is Float64.
 """
-ZeroSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T,Matrix{T}}(n, 0, 1, nothing)
+ZeroSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, 0, 1, nothing)
 ZeroSpace(n::Int) = ZeroSpace(Float64, n)
 
 """
@@ -55,22 +55,22 @@ ZeroSpace(n::Int) = ZeroSpace(Float64, n)
 
 Create base space of dimension`n`. Default type is Float64.
 """
-VectorSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T,Matrix{T}}(n, n, 1, nothing)
+VectorSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, n, 1, nothing)
 VectorSpace(n::Int) = VectorSpace(Float64, n)
 
 size(vs::VectorSpace) = (vs.n, vs.rank)
 rank(vs::VectorSpace) = vs.rank
 dim(vs::VectorSpace) = vs.n
 
-copy(vs::VectorSpace{T,S}) where {T,S} =
-    VectorSpace{T,S}(vs.n, vs.rank, vs.first, vs.qrf)
+copy(vs::VectorSpace{T}) where {T} =
+    VectorSpace{T}(vs.n, vs.rank, vs.first, vs.qrf)
 
 """
     adjoint(vs::VectorSpace) -> VectorSpace`
 
 Create VectorSpace representing the orthogonal complement of `vs`. May be written `vs'`.
 """
-function adjoint(vs::VectorSpace{T,S}) where {T,S}
+function adjoint(vs::VectorSpace{T}) where {T}
     n, r = size(vs)
     if vs.first == 1
         f = r + 1
@@ -78,7 +78,7 @@ function adjoint(vs::VectorSpace{T,S}) where {T,S}
         f = 1
     end
     r = n - r
-    VectorSpace{T,S}(n, r, f, vs.qrf)
+    VectorSpace{T}(n, r, f, vs.qrf)
 end
 
 """
