@@ -25,6 +25,10 @@ vb = VectorSpace(B)
 @test vb == image(B)
 
 @test vz ⊆ va ⊆ vf
+@test va ∪ va == va
+@test va ∪ va' == VectorSpace(eltype(va), dim(va))
+@test va ∩ va == va
+@test va ∩ va' == ZeroSpace(eltype(va), dim(va))
 
 @test kernel(A) == ZeroSpace(m)
 @test image(B) == VectorSpace(l)
@@ -33,5 +37,8 @@ vb = VectorSpace(B)
 
 @test kernel(A') == image(A)'
 @test kernel(A)' == image(A')
+
+@test A * VectorSpace(size(A, 2)) == image(A)
+@test A \ ZeroSpace(n) == kernel(A)
 
 end # module

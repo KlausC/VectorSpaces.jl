@@ -6,6 +6,7 @@ export rank
 using LinearAlgebra
 
 import Base: show, size, copy, adjoint, union, intersect, in, issubset, (==), (*), (\)
+import Base: eltype
 import LinearAlgebra: rank
 
 struct VectorSpace{T<:Number,Q<:Union{QRPivoted{T},Nothing}}
@@ -21,7 +22,7 @@ function show(io::IO, vs::VectorSpace)
 end
 
 """
-    VectorSpace(A::Union{AbstractMatrix,AbstractVector})`
+    VectorSpace(A::Union{AbstractMatrix,AbstractVector})
 
 Create VectorSpace as subspace spanned by the column vectors of A.
 The base space has dimension of the number of rows of A.
@@ -43,7 +44,7 @@ end
 
 VectorSpace(B::AbstractVector{T}) where {T<:Number} = VectorSpace(reshape(B, size(B, 1), 1))
 """
-    ZeroSpace([T<:Number,] n) -> VectorSpace`
+    ZeroSpace([T<:Number,] n) -> VectorSpace
 
 Create zero space in base space of dimension `n`. Default type is Float64.
 """
@@ -51,7 +52,7 @@ ZeroSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, 0, 1, nothing
 ZeroSpace(n::Int) = ZeroSpace(Float64, n)
 
 """
-    VectorSpace([T<:Number], n)`
+    VectorSpace([T<:Number], n)
 
 Create base space of dimension`n`. Default type is Float64.
 """
@@ -61,12 +62,13 @@ VectorSpace(n::Int) = VectorSpace(Float64, n)
 size(vs::VectorSpace) = (vs.n, vs.rank)
 rank(vs::VectorSpace) = vs.rank
 dim(vs::VectorSpace) = vs.n
+eltype(::VectorSpace{T}) where T = T
 
 copy(vs::VectorSpace{T}) where {T} =
     VectorSpace{T}(vs.n, vs.rank, vs.first, vs.qrf)
 
 """
-    adjoint(vs::VectorSpace) -> VectorSpace`
+    adjoint(vs::VectorSpace) -> VectorSpace
 
 Create VectorSpace representing the orthogonal complement of `vs`. May be written `vs'`.
 """
@@ -82,7 +84,7 @@ function adjoint(vs::VectorSpace{T}) where {T}
 end
 
 """
-    span(vs::VectorSpace) -> Matrix`
+    span(vs::VectorSpace) -> Matrix
 
 Return unitary matrix containing basis vectors of `vs`.
 """
@@ -96,7 +98,7 @@ function span(vs::VectorSpace{T}) where {T}
 end
 
 """
-    span_adjoint(vs::VectorSpace) -> Matrix`
+    span_adjoint(vs::VectorSpace) -> Matrix
 
 Return unitary matrix containing basis vectors of orthogonal complement of `vs`.
 Generally `span(vs') == span_adjoint(vs) is true`.
@@ -124,7 +126,7 @@ end
 end
 
 """
-    *(A::AbstractMatrix, vs::VectorSpace) -> VectorSpace`
+    *(A::AbstractMatrix, vs::VectorSpace) -> VectorSpace
 
 Calculate the image of the vector space `vs` under matrix `A`.
 Discard small column vectors in `A * span(vs)`.
@@ -152,7 +154,7 @@ function *(A::AbstractMatrix{T}, vs::VectorSpace{T}) where {T<:Number}
 end
 
 """
-    \\(A::AbstractMatrix, vs::VectorSpace) -> VectorSpace`
+    \\(A::AbstractMatrix, vs::VectorSpace) -> VectorSpace
 
 Calculate the preimage of the vector space `vs` under matrix `A`.
 Discard small row vectors in `span(vs')' * A`.
@@ -172,7 +174,7 @@ function \(A::AbstractMatrix{T}, vs::VectorSpace{T}) where {T<:Number}
         tol = tolerance(A)
         for k = 1:nv-r
             if norm(spana[k, :], Inf) < tol
-                spana[k, :] = 0
+                spana[k, :] .= 0
             end
         end
         kernel(spana)
@@ -180,7 +182,7 @@ function \(A::AbstractMatrix{T}, vs::VectorSpace{T}) where {T<:Number}
 end
 
 """
-    image(A:AbstractMatrix[, vs::VectorSpace] [, k = 1]) -> VectorSpace`
+    image(A:AbstractMatrix[, vs::VectorSpace] [, k = 1]) -> VectorSpace
 
 Create image of `vs` under `A^k`. If k ≠ 1 A must be square matrix.
 If vs is not given, the usual image (range) of `A` is returned.
@@ -215,14 +217,14 @@ function image(A::AbstractMatrix, vs::VectorSpace, k::Int=1)
 end
 
 """
-    kernel(A::AbstractArray) -> VectorSpace`
+    kernel(A::AbstractArray) -> VectorSpace
 
 Create VectorSpace representing the kernel or null-space of the mapping given by matrix `A`.
 """
 kernel(A::AbstractArray) = VectorSpace(kernel_matrix(A))
 
 """
-    preimage(A::AbstractArray[, vs::VectorSpace] [, k::Int=1])`
+    preimage(A::AbstractArray[, vs::VectorSpace] [, k::Int=1])
 
 Create vector space, which is the inverse image of `vs` under the mapping `A^k`.
 `vs` defaults to the zero space; in that case the kernel of `A^k` is returned.
@@ -258,9 +260,9 @@ function preimage(A::AbstractArray, vs::VectorSpace, k::Int=1)
 end
 
 """
-    union(va::VectorSpace, vb::VectorSpace) -> VectorSpace`
+    union(va::VectorSpace, vb::VectorSpace) -> VectorSpace
 
-Create VectorSpace representing `va ∪ vb`.
+Create VectorSpace representing `va ∪ vb`. VectorSpace
 """
 function union(va::VectorSpace, vb::VectorSpace)
     na, ra = size(va)
@@ -280,7 +282,7 @@ function union(va::VectorSpace, vb::VectorSpace)
 end
 
 """
-    intersect(va::VectorSpace, vb::VectorSpace) -> VectorSpace`
+    intersect(va::VectorSpace, vb::VectorSpace) -> VectorSpace
 
 Create VectorSpace representing `va ∩ vb`.
 """
@@ -304,7 +306,7 @@ function intersect(va::VectorSpace, vb::VectorSpace)
 end
 
 """
-    in(A::AbstractArray, vb::VectorSpace) -> Bool`
+    in(A::AbstractArray, vb::VectorSpace) -> Bool
 
 Determine if `A[:,k] ∈ vb ∀ k`.
 """
@@ -313,7 +315,7 @@ function Base.in(A::AbstractArray, vs::VectorSpace)
 end
 
 """
-    issubset(va::VectorSpace, vb::VectorSpace) -> Bool`
+    issubset(va::VectorSpace, vb::VectorSpace) -> Bool
 
 Determine if `va ⊆ vb`.
 """
@@ -330,10 +332,10 @@ end
 
 """
 
-  ` va == vb `
+    va == vb
 
-  Determine if VectorSpaces are (numerically) equal.
-  Equivalent to `va ⊆ vb and vb ⊆ va`.
+Determine if VectorSpaces are (numerically) equal.
+Equivalent to `va ⊆ vb and vb ⊆ va`.
 """
 function ==(va::VectorSpace, vb::VectorSpace)
     va.rank == vb.rank &&
@@ -354,14 +356,14 @@ function _rank(QR::LinearAlgebra.QRPivoted{T,S}, tol::AbstractFloat) where {S<:A
 end
 
 """
-    tolerance(A::AbstractMatrix)`
+    tolerance(A::AbstractMatrix)
 
 Return standard tolerance for a matrix.
 """
 @inline tolerance(A::AbstractMatrix) = eps(norm(A, 1)) * maximum(size(A))
 
 """
-    kernel_matrix(A::AbstractMatrix) -> Matrix`
+    kernel_matrix(A::AbstractMatrix) -> Matrix
 
 Produce unitary matrix, whose vectors are basis of the kernel of Matrix A.
 If the matrix is injective, the a matrix with zero columns is returned.
