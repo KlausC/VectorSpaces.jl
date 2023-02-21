@@ -146,7 +146,7 @@ function *(A::AbstractMatrix{T}, vs::VectorSpace{T}) where {T<:Number}
         tol = tolerance(A)
         for k = 1:r
             if norm(spana[:, k], Inf) < tol
-                spana[:, k] = 0
+                spana[:, k] .= 0
             end
         end
         VectorSpace(spana)
@@ -202,15 +202,10 @@ function image(A::AbstractMatrix, vs::VectorSpace, k::Int = 1)
     va = vs
     if k > 0
         va = ra == m ? image(A) : A * va
-        r = rank(va)
-        while k > 1 && 0 < r < n
-            vaa = A * va
-            n = r
-            r = rank(vaa)
-            k -= 1
-            if r < n
-                va = vaa
-            end
+        for _ = 1:k-1
+            r = rank(va)
+            0 < r < m || break
+            va = A * va
         end
     end
     va
@@ -244,16 +239,10 @@ function preimage(A::AbstractArray, vs::VectorSpace, k::Int = 1)
     va = vs
     if k > 0
         va = ra == 0 ? kernel(A) : A \ va
-        rp = 0
-        r = va.rank
-        while k > 1 && r > rp
-            vaa = A \ va
-            rp = r
-            r = rank(vaa)
-            k -= 1
-            if r > rp
-                va = vaa
-            end
+        for _ = 1:k-1
+            r = rank(va)
+            0 < r < n || break
+            va = A \ va
         end
     end
     va
@@ -270,7 +259,7 @@ function union(va::VectorSpace, vb::VectorSpace)
     na == nb || error("dimension mismatch")
 
     if ra >= na || rb >= nb
-        VectorSpace{eltype(va)}(va.na)
+        VectorSpace(eltype(va), na)
     elseif ra == 0
         vb
     elseif rb == 0
@@ -292,7 +281,7 @@ function intersect(va::VectorSpace, vb::VectorSpace)
     na == nb || error("dimension mismatch")
 
     if ra == 0 || rb == 0
-        ZeroSpace(typeof(va), va.na)
+        ZeroSpace(eltype(va), na)
     elseif ra == na
         vb
     elseif rb == nb
