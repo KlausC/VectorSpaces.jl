@@ -12,10 +12,10 @@ import LinearAlgebra: rank
 struct VectorSpace{T<:Number,Q<:Union{QRPivoted{T},Nothing}}
     n::Int
     rank::Int
-    first::Int
+    adjoint::Bool
     qrf::Q
-    VectorSpace{T}(n::Int, rank::Int, first::Int, qrf::Q) where {T,Q} =
-        new{T,Q}(n, rank, first, qrf)
+    VectorSpace{T}(n::Int, rank::Int, adjoint::Bool, qrf::Q) where {T,Q} =
+        new{T,Q}(n, rank, adjoint, qrf)
 end
 
 function show(io::IO, vs::VectorSpace)
@@ -40,7 +40,7 @@ function VectorSpace(A::AbstractMatrix{T}) where {T<:Number}
     if r <= 0 || r >= n
         qrf = nothing
     end
-    VectorSpace{T}(n, r, 1, qrf)
+    VectorSpace{T}(n, r, false, qrf)
 end
 
 VectorSpace(B::AbstractVector{T}) where {T<:Number} = VectorSpace(reshape(B, size(B, 1), 1))
@@ -49,7 +49,7 @@ VectorSpace(B::AbstractVector{T}) where {T<:Number} = VectorSpace(reshape(B, siz
 
 Create zero space in base space of dimension `n`. Default type is Float64.
 """
-ZeroSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, 0, 1, nothing)
+ZeroSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, 0, false, nothing)
 ZeroSpace(n::Int) = ZeroSpace(Float64, n)
 
 """
@@ -57,7 +57,7 @@ ZeroSpace(n::Int) = ZeroSpace(Float64, n)
 
 Create base space of dimension`n`. Default type is Float64.
 """
-VectorSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, n, 1, nothing)
+VectorSpace(::Type{T}, n::Int) where {T<:Number} = VectorSpace{T}(n, n, false, nothing)
 VectorSpace(n::Int) = VectorSpace(Float64, n)
 
 size(vs::VectorSpace) = (vs.n, vs.rank)
@@ -65,7 +65,7 @@ rank(vs::VectorSpace) = vs.rank
 dim(vs::VectorSpace) = vs.n
 eltype(::VectorSpace{T}) where T = T
 
-copy(vs::VectorSpace{T}) where {T} = VectorSpace{T}(vs.n, vs.rank, vs.first, vs.qrf)
+copy(vs::VectorSpace{T}) where {T} = VectorSpace{T}(vs.n, vs.rank, vs.adjoint, vs.qrf)
 
 """
     adjoint(vs::VectorSpace) -> VectorSpace
@@ -74,13 +74,7 @@ Create VectorSpace representing the orthogonal complement of `vs`. May be writte
 """
 function adjoint(vs::VectorSpace{T}) where {T}
     n, r = size(vs)
-    if vs.first == 1
-        f = r + 1
-    else
-        f = 1
-    end
-    r = n - r
-    VectorSpace{T}(n, r, f, vs.qrf)
+    VectorSpace{T}(n, n - r, !vs.adjoint, vs.qrf)
 end
 
 """
@@ -113,16 +107,17 @@ function span_adjoint(vs::VectorSpace{T}) where {T}
 end
 
 @inline function _range1(vs::VectorSpace)
-    f = vs.first
-    l = vs.rank + f - 1
-    f:l
+    n, r = size(vs)
+    f = vs.adjoint ? n - r : 0
+    l = r + f
+    f+1:l
 end
 
 @inline function _range2(vs::VectorSpace)
     n, r = size(vs)
-    f = vs.first == 1 ? r + 1 : 1
-    l = n - r + f - 1
-    f:l
+    f = vs.adjoint ? 0 : r
+    l = n - r + f
+    f+1:l
 end
 
 """
